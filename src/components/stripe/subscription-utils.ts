@@ -1,5 +1,8 @@
-export function formatDate(date: Date | string | null | undefined): string {
-    if (!date) return "N/A"
+export function formatDate(
+    date: Date | string | null | undefined,
+    notAvailableLabel: string
+): string {
+    if (!date) return notAvailableLabel
     const dateObj = typeof date === "string" ? new Date(date) : date
     return dateObj.toLocaleDateString(undefined, {
         year: "numeric",

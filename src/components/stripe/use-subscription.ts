@@ -2,9 +2,14 @@
 
 import { useContext, useEffect, useState } from "react"
 import { AuthUIContext } from "../../lib/auth-ui-provider"
+import type { AuthLocalization } from "../../localization/auth-localization"
 import type { Subscription } from "../../types/subscription"
 
-export function useSubscription() {
+interface UseSubscriptionParams {
+    localization: AuthLocalization
+}
+
+export function useSubscription({ localization }: UseSubscriptionParams) {
     const { authClient, stripe } = useContext(AuthUIContext)
 
     const [isLoading, setIsLoading] = useState(false)
@@ -163,7 +168,9 @@ export function useSubscription() {
             )
 
             setConfirmationMessage(
-                `Your ${defaultPlanName} subscription has been restored and will continue renewing automatically.`
+                (
+                    localization.STRIPE_CONFIRMATION_SUBSCRIPTION_RESTORED ?? ""
+                ).replace("{plan}", defaultPlanName)
             )
         } catch (error) {
             // eslint-disable-next-line no-console
@@ -232,7 +239,7 @@ export function useSubscription() {
     const isPro = activeSubscription?.plan === defaultPlanId
     const currentPlanName = activeSubscription
         ? getPlanName(activeSubscription.plan)
-        : "Free"
+        : (localization.STRIPE_FREE ?? "")
 
     const isScheduledToCancel =
         !!activeSubscription &&

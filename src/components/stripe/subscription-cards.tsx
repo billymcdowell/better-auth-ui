@@ -1,10 +1,26 @@
 "use client"
 
+import { useContext, useMemo } from "react"
+import { AuthUIContext } from "../../lib/auth-ui-provider"
+import type { AuthLocalization } from "../../localization/auth-localization"
 import { CurrentPlanCard } from "./current-plan-card"
 import { SubscriptionManagementCard } from "./subscription-management-card"
 import { useSubscription } from "./use-subscription"
 
-export function SubscriptionCards() {
+export interface SubscriptionCardsProps {
+    localization?: AuthLocalization
+}
+
+export function SubscriptionCards({
+    localization: localizationProp
+}: SubscriptionCardsProps) {
+    const { localization: contextLocalization } = useContext(AuthUIContext)
+
+    const localization = useMemo(
+        () => ({ ...contextLocalization, ...localizationProp }),
+        [contextLocalization, localizationProp]
+    )
+
     const {
         isLoading,
         canUpgrade,
@@ -18,16 +34,19 @@ export function SubscriptionCards() {
         handleCancel,
         handleRestore,
         handleUpgrade
-    } = useSubscription()
+    } = useSubscription({ localization })
 
     return (
         <div className="space-y-4">
-            <h1 className="mb-4 font-semibold text-xl">Billing Settings</h1>
+            <h1 className="mb-4 font-semibold text-xl">
+                {localization.STRIPE_BILLING_SETTINGS}
+            </h1>
 
             {activeSubscription && (
                 <CurrentPlanCard
                     subscription={activeSubscription}
                     getPlanName={getPlanName}
+                    localization={localization}
                 />
             )}
 
@@ -42,6 +61,7 @@ export function SubscriptionCards() {
                 onUpgrade={handleUpgrade}
                 onCancel={handleCancel}
                 onRestore={handleRestore}
+                localization={localization}
             />
         </div>
     )

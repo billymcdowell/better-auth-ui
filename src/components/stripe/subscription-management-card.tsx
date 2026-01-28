@@ -1,10 +1,11 @@
 "use client"
 
-import { Button } from "../ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
-import { SettingsCardHeader } from "../settings/shared/settings-card-header"
-import { AuthUIContext } from "../../lib/auth-ui-provider"
 import { useContext } from "react"
+import { AuthUIContext } from "../../lib/auth-ui-provider"
+import type { AuthLocalization } from "../../localization/auth-localization"
+import { SettingsCardHeader } from "../settings/shared/settings-card-header"
+import { Button } from "../ui/button"
+import { Card, CardContent } from "../ui/card"
 
 interface SubscriptionManagementCardProps {
     canUpgrade: boolean | null
@@ -17,6 +18,7 @@ interface SubscriptionManagementCardProps {
     onUpgrade: () => void
     onCancel: () => void
     onRestore: () => void
+    localization: AuthLocalization
 }
 
 export function SubscriptionManagementCard({
@@ -29,23 +31,30 @@ export function SubscriptionManagementCard({
     currentPlanName,
     onUpgrade,
     onCancel,
-    onRestore
+    onRestore,
+    localization
 }: SubscriptionManagementCardProps) {
-    
-    const {
-        toast,
-    } = useContext(AuthUIContext)
+    const { toast } = useContext(AuthUIContext)
 
     const getDescription = () => {
         if (canUpgrade === false) {
             if (isPro) {
                 return isScheduledToCancel
-                    ? `Your ${defaultPlanName} subscription will be canceled at the end of the current billing period. You can restore it until then.`
-                    : `You are currently on the ${defaultPlanName} plan.`
+                    ? (
+                          localization.STRIPE_DESCRIPTION_SCHEDULED_TO_CANCEL ??
+                          ""
+                      ).replace("{plan}", defaultPlanName)
+                    : (
+                          localization.STRIPE_DESCRIPTION_CURRENTLY_ON_PLAN ??
+                          ""
+                      ).replace("{plan}", defaultPlanName)
             }
-            return "You are already on a paid plan."
+            return localization.STRIPE_DESCRIPTION_ALREADY_ON_PAID_PLAN ?? ""
         }
-        return `You are currently on the Free plan. Upgrade to the ${defaultPlanName} plan to unlock additional features.`
+        return (localization.STRIPE_DESCRIPTION_ON_FREE_UPGRADE ?? "").replace(
+            "{plan}",
+            defaultPlanName
+        )
     }
 
     if (confirmationMessage) {
@@ -58,13 +67,18 @@ export function SubscriptionManagementCard({
 
     return (
         <Card>
-            <SettingsCardHeader title="Subscription" description={getDescription()} />
+            <SettingsCardHeader
+                title={localization.STRIPE_SUBSCRIPTION}
+                description={getDescription()}
+            />
             <CardContent className="space-y-4">
                 {canUpgrade && (
                     <Button onClick={onUpgrade} disabled={isLoading}>
                         {isLoading
-                            ? "Redirecting to Stripe..."
-                            : `Upgrade to ${defaultPlanName}`}
+                            ? (localization.STRIPE_REDIRECTING_TO_STRIPE ?? "")
+                            : (
+                                  localization.STRIPE_UPGRADE_TO_PLAN ?? ""
+                              ).replace("{plan}", defaultPlanName)}
                     </Button>
                 )}
                 {canUpgrade === false && isPro && (
@@ -77,11 +91,17 @@ export function SubscriptionManagementCard({
                     >
                         {isLoading
                             ? isScheduledToCancel
-                                ? "Restoring subscription..."
-                                : "Cancelling subscription..."
+                                ? localization.STRIPE_RESTORING_SUBSCRIPTION
+                                : localization.STRIPE_CANCELLING_SUBSCRIPTION
                             : isScheduledToCancel
-                              ? `Restore ${defaultPlanName} subscription`
-                              : `Cancel ${defaultPlanName} subscription`}
+                              ? (
+                                    localization.STRIPE_RESTORE_PLAN_SUBSCRIPTION ??
+                                    ""
+                                ).replace("{plan}", defaultPlanName)
+                              : (
+                                    localization.STRIPE_CANCEL_PLAN_SUBSCRIPTION ??
+                                    ""
+                                ).replace("{plan}", defaultPlanName)}
                     </Button>
                 )}
             </CardContent>
