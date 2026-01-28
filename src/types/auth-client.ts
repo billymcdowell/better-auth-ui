@@ -1,4 +1,5 @@
 import { passkeyClient } from "@better-auth/passkey/client"
+import { stripeClient } from "@better-auth/stripe/client"
 import {
     anonymousClient,
     apiKeyClient,
@@ -36,6 +37,9 @@ export const authClient = createAuthClient({
             teams: {
                 enabled: true
             }
+        }),
+        stripeClient({
+            subscription: true
         })
     ]
 })

@@ -33,6 +33,7 @@ import type {
 import type { RenderToast } from "../types/render-toast"
 import type { SignUpOptions } from "../types/sign-up-options"
 import type { SocialOptions } from "../types/social-options"
+import type { StripeOptions } from "../types/stripe-options"
 import type { TeamOptions, TeamOptionsContext } from "../types/team-options"
 import { OrganizationRefetcher } from "./organization-refetcher"
 import type { AuthViewPaths } from "./view-paths"
@@ -211,6 +212,11 @@ export type AuthUIContextType = {
      * @default undefined
      */
     twoFactor?: ("otp" | "totp")[]
+    /**
+     * Stripe subscription configuration
+     * @default undefined
+     */
+    stripe?: StripeOptions
     viewPaths: AuthViewPaths
     /**
      * Navigate to a new URL
@@ -301,6 +307,11 @@ export type AuthUIProviderProps = {
      */
     teams?: TeamOptions | boolean
     /**
+     * Stripe subscription configuration
+     * @default undefined
+     */
+    stripe?: StripeOptions
+    /**
      * Enable or disable Credentials support
      * @default { forgotPassword: true }
      */
@@ -364,6 +375,7 @@ export const AuthUIProvider = ({
     replace,
     Link = DefaultLink,
     emailVerification: emailVerificationProp,
+    stripe: stripeProp,
     ...props
 }: AuthUIProviderProps) => {
     const authClient = authClientProp as AuthClient
@@ -548,6 +560,19 @@ export const AuthUIProvider = ({
             }
         }
     }, [teamsProp, organization])
+
+    const stripe = useMemo<StripeOptions | undefined>(() => {
+        if (!stripeProp) return
+
+        return {
+            plans: stripeProp.plans,
+            defaultPlanId: stripeProp.defaultPlanId ?? "pro",
+            successUrl: stripeProp.successUrl,
+            cancelUrl: stripeProp.cancelUrl,
+            returnUrl: stripeProp.returnUrl,
+            cancelReturnUrl: stripeProp.cancelReturnUrl
+        }
+    }, [stripeProp])
 
     const defaultMutators = useMemo(() => {
         return {
@@ -753,6 +778,7 @@ export const AuthUIProvider = ({
                 account,
                 signUp,
                 social,
+                stripe,
                 toast,
                 navigate: navigate || defaultNavigate,
                 replace: replace || navigate || defaultReplace,
