@@ -29,6 +29,8 @@
         "update-field-card",
         "accounts-card",
         "api-keys-card",
+        "--- Stripe ---",
+        "subscription-cards",
         "--- Redirect ---",
         "redirect-to-sign-in",
         "redirect-to-sign-up",

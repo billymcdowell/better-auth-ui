@@ -76,6 +76,65 @@ export default function AuthPage({ params }: { params: { pathname: string } }) {
 }
 ```
 
+## Stripe-specific localization
+
+Stripe subscription components such as [`<SubscriptionCards />`](/docs/components/subscription-cards), [`<CurrentPlanCard />`](/docs/components/current-plan-card), and [`<SubscriptionManagementCard />`](/docs/components/subscription-management-card) use a set of Stripe‑specific keys from `AuthLocalization`.
+
+You can override these keys globally on `<AuthUIProvider />`:
+
+```tsx title="app/providers.tsx"
+"use client"
+
+import { AuthUIProvider } from "@daveyplate/better-auth-ui"
+import { authClient } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+
+  return (
+    <AuthUIProvider
+      authClient={authClient}
+      navigate={router.push}
+      replace={router.replace}
+      onSessionChange={() => router.refresh()}
+      Link={Link}
+      localization={{
+        STRIPE_BILLING_SETTINGS: "Billing & Subscriptions",
+        STRIPE_SUBSCRIPTION: "Subscription",
+        STRIPE_CURRENT_PLAN_DETAILS: "Current plan details",
+        STRIPE_UPGRADE_TO_PLAN: "Upgrade to {plan}",
+        STRIPE_REDIRECTING_TO_STRIPE: "Redirecting you to Stripe…",
+        STRIPE_DESCRIPTION_ON_FREE_UPGRADE:
+          "You are on the free plan. Upgrade to {plan} to unlock more features.",
+      }}
+    >
+      {children}
+    </AuthUIProvider>
+  )
+}
+```
+
+Or override them for a single Stripe component:
+
+```tsx
+import { SubscriptionCards } from "@daveyplate/better-auth-ui"
+
+export function BillingPage() {
+  return (
+    <SubscriptionCards
+      localization={{
+        STRIPE_BILLING_SETTINGS: "Abonnement et facturation",
+        STRIPE_SUBSCRIPTION: "Abonnement",
+      }}
+    />
+  )
+}
+```
+
+Refer to the [`AuthLocalization`](/api-reference/auth-localization) reference for the full list of available Stripe‑related keys.
+
 ## Using Backend Error Messages
 
 By default, `@daveyplate/better-auth-ui` localizes all error messages using the provided `localization` prop. However, if your backend already returns translated error messages (for example, when using multilingual plugins like `better-auth-localization`), you can configure the provider to use the backend error messages directly instead of the localized strings.

@@ -37,6 +37,56 @@ The following props can be passed to the `<AuthUIProvider />` component:
 
 <AutoTypeTable path="../src/lib/auth-ui-provider.tsx" name="AuthUIProviderProps" />
 
+## Stripe subscription configuration
+
+Stripe subscription support is configured via the `stripe` prop on `<AuthUIProvider />`. This configuration is used by all Stripe‑aware UI component `<SubscriptionCards />`.
+
+```tsx title="providers.tsx"
+"use client"
+
+import { AuthUIProvider } from "@daveyplate/better-auth-ui"
+import { authClient } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+
+  return (
+    <AuthUIProvider
+      authClient={authClient}
+      navigate={router.push}
+      replace={router.replace}
+      onSessionChange={() => router.refresh()}
+      Link={Link}
+      stripe={{
+        plans: {
+          free: "Free",
+          pro: "Pro",
+          enterprise: "Enterprise",
+        },
+        defaultPlanId: "pro",
+        successUrl: (origin) => `${origin}/settings/billing?success=true`,
+        cancelUrl: (origin) => `${origin}/settings/billing?success=false`,
+        returnUrl: (origin) => `${origin}/dashboard`,
+        cancelReturnUrl: (origin) => `${origin}/settings/billing`,
+      }}
+    >
+      {children}
+    </AuthUIProvider>
+  )
+}
+```
+
+The `stripe` prop accepts a [`StripeOptions`](/api-reference/stripe-options) object:
+
+- **`plans`**: Map of plan IDs (for example `"pro"`) to human‑readable display names.
+- **`defaultPlanId`**: The default plan ID used when upgrading, defaults to `"pro"`.
+- **`successUrl`**: URL (or function returning a URL) to redirect to after a successful subscription upgrade.
+- **`cancelUrl`**: URL (or function returning a URL) to redirect to when a subscription upgrade is cancelled.
+- **`returnUrl`**: URL (or function returning a URL) to redirect to after returning from Stripe.
+- **`cancelReturnUrl`**: URL (or function returning a URL) to redirect to after cancelling a subscription.
+
 ## Example
 
 A minimal Next.js layout file using the `AuthUIProvider`:
