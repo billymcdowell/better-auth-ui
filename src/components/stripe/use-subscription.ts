@@ -2,15 +2,24 @@
 
 import { useContext, useEffect, useState } from "react"
 import { AuthUIContext } from "../../lib/auth-ui-provider"
+import { getLocalizedError } from "../../lib/utils"
 import type { AuthLocalization } from "../../localization/auth-localization"
 import type { Subscription } from "../../types/subscription"
+import { hasSubscriptionClient } from "../../types/subscription"
 
 interface UseSubscriptionParams {
     localization: AuthLocalization
+    customerType?: "user" | "organization"
+    referenceId?: string
 }
 
-export function useSubscription({ localization }: UseSubscriptionParams) {
-    const { authClient, stripe } = useContext(AuthUIContext)
+export function useSubscription({
+    localization,
+    customerType = "user",
+    referenceId
+}: UseSubscriptionParams) {
+    const { authClient, stripe, toast, localizeErrors } =
+        useContext(AuthUIContext)
 
     const [isLoading, setIsLoading] = useState(false)
     const [canUpgrade, setCanUpgrade] = useState<boolean | null>(null)
@@ -35,25 +44,36 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
     // Load the user's current subscription and only allow upgrade if they are on the free tier
     useEffect(() => {
         const loadSubscription = async () => {
+            if (!hasSubscriptionClient(authClient)) {
+                // eslint-disable-next-line no-console
+                console.error(
+                    "[better-auth-ui] Stripe subscription plugin is not configured on your authClient. Add stripeClient({ subscription: true }) to your createAuthClient plugins."
+                )
+                return
+            }
+
             try {
                 setConfirmationMessage(null)
                 const { data, error } = await authClient.subscription.list({
                     query: {
-                        // for user-level billing, we can rely on the default referenceId (user id)
-                        customerType: "user"
+                        customerType,
+                        ...(referenceId ? { referenceId } : {})
                     }
                 })
 
                 if (error) {
+                    toast({
+                        variant: "error",
+                        message: getLocalizedError({
+                            error,
+                            localization,
+                            localizeErrors
+                        })
+                    })
                     // If we can't determine their subscription, fall back to allowing upgrade
-                    // eslint-disable-next-line no-console
-                    console.error("Failed to load subscriptions", error)
                     setCanUpgrade(true)
                     return
                 }
-
-                // eslint-disable-next-line no-console
-                console.log("Loaded subscriptions", data)
 
                 const activeSubscription = data?.find(
                     (sub) =>
@@ -72,21 +92,34 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
                 // If they're already on the default plan (or any paid plan), don't allow upgrade
                 setCanUpgrade(activeSubscription.plan !== defaultPlanId)
             } catch (error) {
-                // eslint-disable-next-line no-console
-                console.error(
-                    "Unexpected error while loading subscriptions",
-                    error
-                )
+                toast({
+                    variant: "error",
+                    message: getLocalizedError({
+                        error,
+                        localization,
+                        localizeErrors
+                    })
+                })
                 setCanUpgrade(true)
             }
         }
 
         void loadSubscription()
-    }, [authClient, defaultPlanId])
+    }, [
+        authClient,
+        customerType,
+        defaultPlanId,
+        localizeErrors,
+        localization,
+        referenceId,
+        toast
+    ])
 
     const handleCancel = async () => {
         if (!activeSubscription || !activeSubscription.stripeSubscriptionId)
             return
+
+        if (!hasSubscriptionClient(authClient)) return
 
         try {
             setIsLoading(true)
@@ -101,16 +134,21 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
                     : (stripe?.cancelReturnUrl ?? `${origin}/settings/billing`)
 
             const { error } = await authClient.subscription.cancel({
-                // for user-level billing, we can rely on the default referenceId (user id)
-                customerType: "user",
+                customerType,
                 // Better Auth expects the Stripe subscription id (sub_*)
                 subscriptionId: activeSubscription.stripeSubscriptionId,
                 returnUrl: cancelReturnUrl
             })
 
             if (error) {
-                // eslint-disable-next-line no-console
-                console.error("Failed to cancel subscription", error)
+                toast({
+                    variant: "error",
+                    message: getLocalizedError({
+                        error,
+                        localization,
+                        localizeErrors
+                    })
+                })
                 return
             }
 
@@ -125,11 +163,14 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
                     : prev
             )
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error(
-                "Unexpected error while cancelling subscription",
-                error
-            )
+            toast({
+                variant: "error",
+                message: getLocalizedError({
+                    error,
+                    localization,
+                    localizeErrors
+                })
+            })
         } finally {
             setIsLoading(false)
         }
@@ -139,19 +180,26 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
         if (!activeSubscription || !activeSubscription.stripeSubscriptionId)
             return
 
+        if (!hasSubscriptionClient(authClient)) return
+
         try {
             setIsLoading(true)
 
             const { error } = await authClient.subscription.restore({
-                // for user-level billing, we can rely on the default referenceId (user id)
-                customerType: "user",
+                customerType,
                 // Better Auth expects the Stripe subscription id (sub_*)
                 subscriptionId: activeSubscription.stripeSubscriptionId
             })
 
             if (error) {
-                // eslint-disable-next-line no-console
-                console.error("Failed to restore subscription", error)
+                toast({
+                    variant: "error",
+                    message: getLocalizedError({
+                        error,
+                        localization,
+                        localizeErrors
+                    })
+                })
                 return
             }
 
@@ -173,17 +221,22 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
                 ).replace("{plan}", defaultPlanName)
             )
         } catch (error) {
-            // eslint-disable-next-line no-console
-            console.error(
-                "Unexpected error while restoring subscription",
-                error
-            )
+            toast({
+                variant: "error",
+                message: getLocalizedError({
+                    error,
+                    localization,
+                    localizeErrors
+                })
+            })
         } finally {
             setIsLoading(false)
         }
     }
 
     const handleUpgrade = async () => {
+        if (!hasSubscriptionClient(authClient)) return
+
         try {
             setIsLoading(true)
             setConfirmationMessage(null)
@@ -211,7 +264,7 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
 
             const { error } = await authClient.subscription.upgrade({
                 plan: defaultPlanId,
-                customerType: "user",
+                customerType,
                 seats: 1,
                 successUrl,
                 cancelUrl,
@@ -221,16 +274,24 @@ export function useSubscription({ localization }: UseSubscriptionParams) {
             })
 
             if (error) {
-                // eslint-disable-next-line no-console
-                console.error("Failed to upgrade subscription", error)
+                toast({
+                    variant: "error",
+                    message: getLocalizedError({
+                        error,
+                        localization,
+                        localizeErrors
+                    })
+                })
             }
         } catch (error) {
-            // You can wire this into `sonner` to show a toast if desired
-            // eslint-disable-next-line no-console
-            console.error(
-                "Unexpected error while upgrading subscription",
-                error
-            )
+            toast({
+                variant: "error",
+                message: getLocalizedError({
+                    error,
+                    localization,
+                    localizeErrors
+                })
+            })
         } finally {
             setIsLoading(false)
         }

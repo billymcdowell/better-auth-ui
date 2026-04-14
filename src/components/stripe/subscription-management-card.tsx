@@ -1,11 +1,12 @@
 "use client"
 
-import { useContext } from "react"
+import { useContext, useEffect } from "react"
 import { AuthUIContext } from "../../lib/auth-ui-provider"
 import type { AuthLocalization } from "../../localization/auth-localization"
 import { SettingsCardHeader } from "../settings/shared/settings-card-header"
 import { Button } from "../ui/button"
 import { Card, CardContent } from "../ui/card"
+import { Skeleton } from "../ui/skeleton"
 
 interface SubscriptionManagementCardProps {
     canUpgrade: boolean | null
@@ -36,6 +37,11 @@ export function SubscriptionManagementCard({
 }: SubscriptionManagementCardProps) {
     const { toast } = useContext(AuthUIContext)
 
+    useEffect(() => {
+        if (!confirmationMessage) return
+        toast({ variant: "success", message: confirmationMessage })
+    }, [confirmationMessage, toast])
+
     const getDescription = () => {
         if (canUpgrade === false) {
             if (isPro) {
@@ -57,12 +63,18 @@ export function SubscriptionManagementCard({
         )
     }
 
-    if (confirmationMessage) {
-        console.log("toast should be shown", confirmationMessage)
-        toast({
-            variant: "success",
-            message: confirmationMessage
-        })
+    if (canUpgrade === null) {
+        return (
+            <Card>
+                <SettingsCardHeader
+                    title={localization.STRIPE_SUBSCRIPTION}
+                    isPending
+                />
+                <CardContent className="space-y-4">
+                    <Skeleton className="h-9 w-36" />
+                </CardContent>
+            </Card>
+        )
     }
 
     return (

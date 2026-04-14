@@ -9,10 +9,14 @@ import { useSubscription } from "./use-subscription"
 
 export interface SubscriptionCardsProps {
     localization?: AuthLocalization
+    customerType?: "user" | "organization"
+    referenceId?: string
 }
 
 export function SubscriptionCards({
-    localization: localizationProp
+    localization: localizationProp,
+    customerType,
+    referenceId
 }: SubscriptionCardsProps) {
     const { localization: contextLocalization } = useContext(AuthUIContext)
 
@@ -34,7 +38,7 @@ export function SubscriptionCards({
         handleCancel,
         handleRestore,
         handleUpgrade
-    } = useSubscription({ localization })
+    } = useSubscription({ localization, customerType, referenceId })
 
     return (
         <div className="space-y-4">

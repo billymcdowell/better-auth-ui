@@ -56,6 +56,9 @@ export const STRIPE_LOCALIZATION = {
     /** @default "N/A" */
     STRIPE_NOT_AVAILABLE: "N/A",
 
+    /** @default "Renews On" */
+    STRIPE_RENEWS_ON: "Renews On",
+
     /** @default "Free" */
     STRIPE_FREE: "Free",
 

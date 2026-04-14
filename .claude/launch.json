@@ -1,0 +1,23 @@
+{
+    "version": "0.0.1",
+    "configurations": [
+        {
+            "name": "Library (tsc watch)",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "dev"
+            ],
+            "port": null
+        },
+        {
+            "name": "Docs (Next.js)",
+            "runtimeExecutable": "pnpm",
+            "runtimeArgs": [
+                "--filter",
+                "docs",
+                "dev"
+            ],
+            "port": 3000
+        }
+    ]
+}

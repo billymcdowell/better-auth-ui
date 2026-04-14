@@ -21,6 +21,7 @@ export interface Subscription {
     cancelAtPeriodEnd?: boolean
     cancelAt?: Date | string | null
     canceledAt?: Date | string | null
+    currentPeriodEnd?: Date | string | null
     endedAt?: Date | string | null
     [key: string]: unknown
 }

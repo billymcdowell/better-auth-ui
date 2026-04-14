@@ -1,0 +1,74 @@
+---
+title: StripeOptions
+---
+
+The `StripeOptions` type configures Stripe subscription support in [`<AuthUIProvider />`](/docs/components/auth-ui-provider). Pass it as the `stripe` prop to enable billing UI across all Stripe‑aware components.
+
+<AutoTypeTable path="../src/types/stripe-options.ts" name="StripeOptions" />
+
+## URL helpers
+
+All URL fields accept either a plain string or a function that receives the current `window.location.origin` and returns a string. The function form is useful when you want to build environment‑agnostic URLs:
+
+```tsx
+stripe={{
+  successUrl: (origin) => `${origin}/settings/billing?success=true`,
+  cancelUrl:  (origin) => `${origin}/settings/billing?success=false`,
+  returnUrl:  (origin) => `${origin}/dashboard`,
+  cancelReturnUrl: (origin) => `${origin}/settings/billing`,
+}}
+```
+
+## Default values
+
+| Field             | Default                                          |
+|-------------------|--------------------------------------------------|
+| `defaultPlanId`   | `"pro"`                                          |
+| `successUrl`      | `{origin}/settings/billing?success=true`         |
+| `cancelUrl`       | `{origin}/settings/billing?success=false`        |
+| `returnUrl`       | `{origin}/dashboard`                             |
+| `cancelReturnUrl` | `{origin}/settings/billing`                      |
+
+## Example
+
+```tsx title="providers.tsx"
+"use client"
+
+import { AuthUIProvider } from "@daveyplate/better-auth-ui"
+import { authClient } from "@/lib/auth-client"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
+
+  return (
+    <AuthUIProvider
+      authClient={authClient}
+      navigate={router.push}
+      replace={router.replace}
+      onSessionChange={() => router.refresh()}
+      Link={Link}
+      stripe={{
+        plans: {
+          pro: "Pro",
+          enterprise: "Enterprise",
+        },
+        defaultPlanId: "pro",
+        successUrl: (origin) => `${origin}/settings/billing?success=true`,
+        cancelUrl:  (origin) => `${origin}/settings/billing?success=false`,
+        returnUrl:  (origin) => `${origin}/dashboard`,
+        cancelReturnUrl: (origin) => `${origin}/settings/billing`,
+      }}
+    >
+      {children}
+    </AuthUIProvider>
+  )
+}
+```
+
+## Related
+
+- [`<AuthUIProvider />`](/docs/components/auth-ui-provider) – Where `StripeOptions` is passed.
+- [`<SubscriptionCards />`](/docs/components/subscription-cards) – The primary Stripe billing component.
+- [`AuthLocalization`](/api-reference/auth-localization) – Localization keys for all Stripe UI strings.

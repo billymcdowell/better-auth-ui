@@ -60,6 +60,16 @@ export function CurrentPlanCard({
                             }
                         />
                     )}
+                    {subscription.currentPeriodEnd &&
+                        !subscription.cancelAtPeriodEnd && (
+                            <SubscriptionDetailRow
+                                label={localization.STRIPE_RENEWS_ON ?? ""}
+                                value={formatDate(
+                                    subscription.currentPeriodEnd,
+                                    localization.STRIPE_NOT_AVAILABLE ?? ""
+                                )}
+                            />
+                        )}
                     {subscription.cancelAt && (
                         <SubscriptionDetailRow
                             label={
