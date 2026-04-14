@@ -12,6 +12,7 @@
         "additional-field",
         "additional-fields",
         "auth-localization",
+        "stripe-options",
         "auth-view-class-names",
         "auth-form-class-names",
         "user-avatar-class-names",

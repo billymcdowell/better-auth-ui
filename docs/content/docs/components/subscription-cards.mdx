@@ -1,0 +1,132 @@
+---
+title: <SubscriptionCards />
+description: A set of billing and subscription management cards powered by Stripe configuration in <AuthUIProvider />.
+---
+
+<img alt="Subscription Cards" src="/screenshots/subscription-cards-dark.png" className="rounded-xl hidden dark:block w-lg mt-0 mb-0" />
+<img alt="Subscription Cards" src="/screenshots/subscription-cards-light.png" className="rounded-xl dark:hidden w-lg mt-0 mb-0" />
+
+## Import
+
+```tsx
+import { SubscriptionCards } from "@daveyplate/better-auth-ui"
+```
+
+## Usage
+
+```tsx
+<SubscriptionCards />
+```
+
+The `<SubscriptionCards />` component reads your Stripe configuration from `<AuthUIProvider />` and automatically renders:
+
+- Your **current plan details** (plan name, status, subscription ID, renewal date, and lifecycle dates)
+- A **subscription management card** for upgrading, cancelling, or restoring subscriptions
+- A **skeleton loading state** while subscription data is being fetched
+
+## Props
+
+| Name           | Type                           | Default     | Description                                                                                      |
+|----------------|--------------------------------|-------------|--------------------------------------------------------------------------------------------------|
+| `localization` | `Partial<AuthLocalization>`    | `undefined` | Optional localization overrides for Stripe‑specific billing UI and messages                      |
+| `customerType` | `"user" \| "organization"`    | `"user"`    | Whether to load and manage billing for the current user or an organization                       |
+| `referenceId`  | `string`                       | `undefined` | The ID of the organization (or custom entity) to use for billing lookups when `customerType` is set to `"organization"` |
+
+> **Note:** When `localization` is omitted, the component uses the `localization` from `<AuthUIProvider />`.
+
+## Example
+
+```tsx
+import { SubscriptionCards } from "@daveyplate/better-auth-ui"
+
+export function BillingSettingsPage() {
+  return (
+    <div className="container mx-auto p-6">
+      <SubscriptionCards />
+    </div>
+  )
+}
+```
+
+## Organization billing
+
+To show billing for an organization rather than the current user, pass `customerType="organization"` along with the organization's ID:
+
+```tsx
+import { SubscriptionCards } from "@daveyplate/better-auth-ui"
+
+export function OrganizationBillingPage({ orgId }: { orgId: string }) {
+  return (
+    <SubscriptionCards
+      customerType="organization"
+      referenceId={orgId}
+    />
+  )
+}
+```
+
+## Custom Localization
+
+You can customize the text used in the Stripe billing UI either globally via `<AuthUIProvider />` or per‑component via the `localization` prop:
+
+```tsx
+<SubscriptionCards
+  localization={{
+    STRIPE_BILLING_SETTINGS: "Billing & Subscriptions",
+    STRIPE_SUBSCRIPTION: "Subscription",
+    STRIPE_UPGRADE_TO_PLAN: "Upgrade to {plan}",
+    STRIPE_REDIRECTING_TO_STRIPE: "Redirecting you to Stripe…",
+    STRIPE_RENEWS_ON: "Next billing date",
+  }}
+/>
+```
+
+See the [`Localization`](/docs/advanced/localization) guide and [`AuthLocalization`](/api-reference/auth-localization) reference for a complete list of available Stripe‑related keys.
+
+## `useSubscription` hook
+
+The underlying hook is exported for use in custom billing UIs:
+
+```tsx
+import { useSubscription } from "@daveyplate/better-auth-ui"
+```
+
+```tsx
+import { useSubscription } from "@daveyplate/better-auth-ui"
+
+export function CustomBillingUI() {
+  const {
+    isLoading,
+    canUpgrade,
+    activeSubscription,
+    isPro,
+    isScheduledToCancel,
+    defaultPlanName,
+    currentPlanName,
+    handleUpgrade,
+    handleCancel,
+    handleRestore,
+  } = useSubscription({ localization })
+
+  // Build your own billing UI using the state and handlers
+}
+```
+
+The hook accepts the same `customerType` and `referenceId` props as `<SubscriptionCards />`, letting you scope billing to a user or organization.
+
+## Features
+
+- **Automatic wiring to Stripe config**: Uses the `stripe` configuration from `<AuthUIProvider />` (plans, default plan, and redirect URLs).
+- **Current plan details**: Shows plan name, status, subscription ID, renewal date (`currentPeriodEnd`), and key lifecycle dates (scheduled cancellation, canceled at, ended at).
+- **Upgrade / cancel / restore flows**: Renders the correct action button based on the active subscription state, with loading states on each action.
+- **Skeleton loading state**: Displays a skeleton card while subscription data is being fetched, preventing layout shift.
+- **Error toasts**: API errors are surfaced as toast notifications using the context `toast` handler rather than being silently swallowed.
+- **Organization billing**: Supports both user-level and organization-level billing via the `customerType` and `referenceId` props.
+- **Localized copy**: All labels, descriptions, button text, and messages are driven by `AuthLocalization`.
+- **Safe plugin detection**: If `stripeClient` is not configured on your `authClient`, a descriptive console error is emitted and no crash occurs.
+
+## Related
+
+- [`StripeOptions`](/api-reference/stripe-options) – Configuration reference for the `stripe` prop on `<AuthUIProvider />`.
+- [`useSubscription`](#usesubscription-hook) – The underlying hook, exported for building custom billing UIs.
+- [`AuthLocalization`](/api-reference/auth-localization) – Full list of Stripe localization keys.
